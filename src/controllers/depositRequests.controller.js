@@ -1,0 +1,39 @@
+import { asyncHandler } from "../utils/errors.js";
+import { created, ok } from "../utils/response.js";
+import {
+  createDepositRequestSchema,
+  scheduleDepositRequestSchema,
+  completeDepositRequestSchema,
+} from "../validations/depositRequests.validation.js";
+import { DepositRequestsService } from "../services/depositRequests.service.js";
+
+export const createDepositRequest = asyncHandler(async (req, res) => {
+  const parsed = createDepositRequestSchema.parse(req.body);
+  const data = await DepositRequestsService.create(req.user, parsed);
+  return created(res, data, "Deposit request created");
+});
+
+export const listMyDepositRequests = asyncHandler(async (req, res) => {
+  const data = await DepositRequestsService.listMine(req.user);
+  return ok(res, data, "My deposit requests");
+});
+
+export const scheduleDepositRequest = asyncHandler(async (req, res) => {
+  const parsed = scheduleDepositRequestSchema.parse(req.body);
+  const data = await DepositRequestsService.schedule(
+    req.user,
+    Number(req.params.id),
+    parsed
+  );
+  return ok(res, data, "Deposit request scheduled");
+});
+
+export const completeDepositRequest = asyncHandler(async (req, res) => {
+  const parsed = completeDepositRequestSchema.parse(req.body);
+  const data = await DepositRequestsService.complete(
+    req.user,
+    Number(req.params.id),
+    parsed
+  );
+  return ok(res, data, "Deposit request completed");
+});
