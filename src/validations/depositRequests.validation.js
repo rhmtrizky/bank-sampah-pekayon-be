@@ -1,9 +1,32 @@
 import { z } from "zod";
 
-export const createDepositRequestSchema = z.object({
-  waste_type_id: z.number().int().positive(),
-  estimated_weight: z.number().positive(),
-  photo: z.string().url().optional().nullable(),
+// Helper to parse JSON string safely
+const parseJsonArray = (val) => {
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return parsed;
+    } catch (e) {
+      return val; // let zod raise a validation error later
+    }
+  }
+  return val;
+};
+
+export const depositRequestSchema = z.object({
+  rw_id: z.coerce.number().int().positive(),
+  items: z.preprocess(
+    parseJsonArray,
+    z
+      .array(
+        z.object({
+          waste_type_id: z.coerce.number().int().positive(),
+          weight_kg: z.coerce.number().positive(),
+        })
+      )
+      .min(1)
+  ),
+  // photo handled by multer; no validation here
 });
 
 export const scheduleDepositRequestSchema = z.object({

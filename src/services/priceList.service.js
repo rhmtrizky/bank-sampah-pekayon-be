@@ -14,6 +14,7 @@ export const PriceListService = {
     if (!wt) throw new AppError(404, "Waste type not found");
     return PriceListRepo.create({
       waste_type_id: payload.waste_type_id,
+      kelurahan_id: 1,
       rw_id: user.rw,
       buy_price: toDec(payload.buy_price),
       sell_price: toDec(payload.sell_price),

@@ -1,21 +1,28 @@
 import { asyncHandler } from "../utils/errors.js";
 import { created, ok } from "../utils/response.js";
 import {
-  createDepositRequestSchema,
+  depositRequestSchema,
   scheduleDepositRequestSchema,
   completeDepositRequestSchema,
 } from "../validations/depositRequests.validation.js";
 import { DepositRequestsService } from "../services/depositRequests.service.js";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
 
 export const createDepositRequest = asyncHandler(async (req, res) => {
-  const parsed = createDepositRequestSchema.parse(req.body);
-  const data = await DepositRequestsService.create(req.user, parsed);
+  const parsed = depositRequestSchema.parse(req.body);
+  const data = await DepositRequestsService.create(req.user, parsed, req.file);
   return created(res, data, "Deposit request created");
 });
 
 export const listMyDepositRequests = asyncHandler(async (req, res) => {
   const data = await DepositRequestsService.listMine(req.user);
   return ok(res, data, "My deposit requests");
+});
+
+export const getDepositRequestDetail = asyncHandler(async (req, res) => {
+  const data = await DepositRequestsService.detail(req.user, req.params.id);
+  return ok(res, data, "Deposit request detail");
 });
 
 export const scheduleDepositRequest = asyncHandler(async (req, res) => {

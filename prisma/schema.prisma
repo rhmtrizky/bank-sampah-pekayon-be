@@ -7,12 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/*
-  Schema untuk: Bank Sampah Kelurahan Pekayon
-  - Sesuai dengan spesifikasi final yang kamu berikan.
-  - Primary keys menggunakan Int autoincrement (gampang di-migrate).
-  - Semua datetime menggunakan DateTime @default(now()).
-*/
+/**
+ * Schema untuk: Bank Sampah Kelurahan Pekayon
+ * - Sesuai dengan spesifikasi final yang kamu berikan.
+ * - Primary keys menggunakan Int autoincrement (gampang di-migrate).
+ * - Semua datetime menggunakan DateTime @default(now()).
+ */
 
 enum UserRole {
   warga
@@ -40,287 +40,336 @@ enum WalletHistoryType {
 }
 
 model users {
-  user_id       Int       @id @default(autoincrement())
-  name          String
-  email         String?   @unique
-  phone         String?   @unique
-  password String
-  role          UserRole  @default(warga)
-  rt            Int?      // nullable, untuk monitoring RT
-  rw            Int?      // relation to rw_list.rw_id (nullable for kelurahan/ppsu)
-  kelurahan_id  Int?      // nullable (only kelurahan or ppsu)
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  user_id      Int      @id @default(autoincrement())
+  name         String
+  email        String?  @unique
+  phone        String?  @unique
+  alamat       String?
+  password     String
+  role         UserRole @default(warga)
+  rt           Int? // nullable, untuk monitoring RT
+  rw           Int? // relation to rw_list.rw_id (nullable for kelurahan/ppsu)
+  kelurahan_id Int? // nullable (only kelurahan or ppsu)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
   // relations
-  wallet        wallets?
-  rw_list       rw_list?          @relation("rw_users", fields: [rw], references: [rw_id])
-  transactions  transactions[]    @relation("user_transactions")
-  deposit_requests deposit_requests[] 
-  notifications notifications[]   @relation("user_notifications")
-  wallet_history wallet_history[]
+  wallet           wallets?
+  rw_list          rw_list?           @relation("rw_users", fields: [rw], references: [rw_id])
+  transactions     transactions[]     @relation("user_transactions")
+  deposit_requests deposit_requests[]
+  notifications    notifications[]    @relation("user_notifications")
+  wallet_history   wallet_history[]
 }
 
 model kelurahan {
-  kelurahan_id   Int      @id @default(autoincrement())
+  kelurahan_id   Int     @id @default(autoincrement())
   nama_kelurahan String
   kecamatan      String?
   kota           String?
 
   // relations
-  rw_list        rw_list[] 
-  price_list_kelurahan price_list[] @relation("price_kelurahan")
+  rw_list              rw_list[]
+  price_list_kelurahan price_list[]           @relation("price_kelurahan")
   collection_schedules collection_schedules[]
   withdraw_schedules   withdraw_schedules[]
-  notifications        notifications[] @relation("kelurahan_notifications")
-  bulk_sales          bulk_sales[]    @relation("kelurahan_sales")
-  reports              reports[]       @relation("kelurahan_reports")
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  notifications        notifications[]        @relation("kelurahan_notifications")
+  bulk_sales           bulk_sales[]           @relation("kelurahan_sales")
+  reports              reports[]              @relation("kelurahan_reports")
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
 }
 
 model rw_list {
-  rw_id         Int      @id @default(autoincrement())
-  kelurahan_id  Int
-  nomor_rw      Int
-  name          String?      // optional nama pengurus RW
-  phone         String?
-  address       String?
-  active        Boolean @default(true)
+  rw_id        Int     @id @default(autoincrement())
+  kelurahan_id Int
+  nomor_rw     Int
+  name         String? // optional nama pengurus RW
+  phone        String?
+  address      String?
+  active       Boolean @default(true)
 
   // relations
-  kelurahan     kelurahan    @relation(fields: [kelurahan_id], references: [kelurahan_id])
-  users         users[]      @relation("rw_users")
-  waste_types   waste_types[]
-  price_list    price_list[] @relation("price_rw")
+  kelurahan            kelurahan              @relation(fields: [kelurahan_id], references: [kelurahan_id])
+  users                users[]                @relation("rw_users")
+  waste_types          waste_types[]
+  price_list           price_list[]           @relation("price_rw")
   collection_schedules collection_schedules[]
   withdraw_schedules   withdraw_schedules[]
-  notifications notifications[] @relation("rw_notifications")
-  bulk_sales    bulk_sales[]  @relation("rw_sales")
-  reports       reports[]     @relation("rw_reports")
-  transactions  transactions[] 
-  deposit_requests deposit_requests[]
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  notifications        notifications[]        @relation("rw_notifications")
+  bulk_sales           bulk_sales[]           @relation("rw_sales")
+  reports              reports[]              @relation("rw_reports")
+  transactions         transactions[]
+  deposit_requests     deposit_requests[]
+  created_at           DateTime               @default(now())
+  updated_at           DateTime               @updatedAt
 
   @@unique([kelurahan_id, nomor_rw])
 }
 
-/* Waste types global (master list) */
+/**
+ * Waste types global (master list)
+ */
 model waste_types {
-  waste_type_id Int    @id @default(autoincrement())
-  name          String
+  waste_type_id Int     @id @default(autoincrement())
+  name          String  @unique
   description   String?
 
   // relations
-  price_list    price_list[]
-  transactions  transactions[]
-  deposit_requests deposit_requests[]
-  bulk_sale_items bulk_sale_items[]
-  rw_list       rw_list[]
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  price_list            price_list[]
+  transactions          transactions[]
+  deposit_request_items deposit_request_items[]
+  bulk_sale_items       bulk_sale_items[]
+  rw_list               rw_list[]
+  created_at            DateTime                @default(now())
+  updated_at            DateTime                @updatedAt
 }
 
-/* price_list: harga per RW atau per Kelurahan(PPSU). 
-   Either rw_id or kelurahan_id is set (nullable the other). */
+/**
+ * price_list: harga per RW atau per Kelurahan(PPSU).
+ * Either rw_id or kelurahan_id is set (nullable the other).
+ */
 model price_list {
-  price_id        Int     @id @default(autoincrement())
-  waste_type_id   Int
-  rw_id           Int?    // nullable -> price for RW
-  kelurahan_id    Int?    // nullable -> price for kelurahan (PPSU)
-  buy_price       Decimal @db.Decimal(12,2)
-  sell_price      Decimal @db.Decimal(12,2)
-  effective_date  DateTime
+  price_id       Int      @id @default(autoincrement())
+  waste_type_id  Int
+  rw_id          Int? // nullable -> price for RW
+  kelurahan_id   Int? // nullable -> price for kelurahan (PPSU)
+  buy_price      Decimal  @db.Decimal(12, 2)
+  sell_price     Decimal  @db.Decimal(12, 2)
+  effective_date DateTime
 
   // relations
-  waste_type      waste_types  @relation(fields: [waste_type_id], references: [waste_type_id])
-  rw_list         rw_list?     @relation("price_rw", fields: [rw_id], references: [rw_id])
-  kelurahan       kelurahan?   @relation("price_kelurahan", fields: [kelurahan_id], references: [kelurahan_id])
+  waste_type waste_types @relation(fields: [waste_type_id], references: [waste_type_id])
+  rw_list    rw_list?    @relation("price_rw", fields: [rw_id], references: [rw_id])
+  kelurahan  kelurahan?  @relation("price_kelurahan", fields: [kelurahan_id], references: [kelurahan_id])
 
   @@index([waste_type_id])
   @@index([rw_id])
   @@index([kelurahan_id])
 }
 
-/* transactions: setoran warga / ppsu */
+/**
+ * transactions: setoran warga / ppsu
+ */
 model transactions {
-  transaction_id   Int            @id @default(autoincrement())
-  user_id          Int
-  rw_id            Int
-  kelurahan_id     Int?           // only used for PPSU transactions
-  waste_type_id    Int
-  weight_kg        Decimal        @db.Decimal(12,3)
-  price_per_kg     Decimal        @db.Decimal(12,2)
-  total_amount     Decimal        @db.Decimal(14,2)
+  transaction_id     Int               @id @default(autoincrement())
+  user_id            Int
+  rw_id              Int
+  kelurahan_id       Int? // only used for PPSU transactions
+  waste_type_id      Int
+  weight_kg          Decimal           @db.Decimal(12, 3)
+  price_per_kg       Decimal           @db.Decimal(12, 2)
+  total_amount       Decimal           @db.Decimal(14, 2)
   transaction_method TransactionMethod
-  request_id       Int?           // FK to deposit_requests if originated by online request
-  rt               Int?
-  created_at       DateTime       @default(now())
+  request_id         Int? // FK to deposit_requests if originated by online request
+  rt                 Int?
+  created_at         DateTime          @default(now())
 
   // relations
-  user             users          @relation("user_transactions", fields: [user_id], references: [user_id])
-  rw_list          rw_list        @relation(fields: [rw_id], references: [rw_id])
-  waste_type       waste_types    @relation(fields: [waste_type_id], references: [waste_type_id])
-  deposit_request  deposit_requests? @relation(fields: [request_id], references: [request_id])
+  user            users             @relation("user_transactions", fields: [user_id], references: [user_id])
+  rw_list         rw_list           @relation(fields: [rw_id], references: [rw_id])
+  waste_type      waste_types       @relation(fields: [waste_type_id], references: [waste_type_id])
+  deposit_request deposit_requests? @relation(fields: [request_id], references: [request_id])
+
   @@index([user_id])
   @@index([rw_id])
   @@index([waste_type_id])
 }
 
-/* deposit_requests: request setoran online */
+/**
+ * deposit_requests: request setoran online
+ */
 model deposit_requests {
-  request_id       Int       @id @default(autoincrement())
-  user_id          Int
-  rw_id            Int
-  waste_type_id    Int
-  estimated_weight Decimal   @db.Decimal(12,3)
-  photo            String? 
-  status           RequestStatus @default(pending)
-  scheduled_date   DateTime?
-  created_at       DateTime   @default(now())
+  request_id     Int           @id @default(autoincrement())
+  user_id        Int
+  rw_id          Int
+  photo          String?
+  status         RequestStatus @default(pending)
+  scheduled_date DateTime?
+  created_at     DateTime      @default(now())
 
   // relations
-  user             users     @relation(fields: [user_id], references: [user_id])
-  rw_list          rw_list   @relation(fields: [rw_id], references: [rw_id])
-  waste_type       waste_types @relation(fields: [waste_type_id], references: [waste_type_id])
-  transactions     transactions[]
+  user         users                   @relation(fields: [user_id], references: [user_id])
+  rw_list      rw_list                 @relation(fields: [rw_id], references: [rw_id])
+  items        deposit_request_items[]
+  transactions transactions[]
+
   @@index([user_id])
   @@index([rw_id])
 }
 
-/* wallets: saldo warga */
+/**
+ * deposit_request_items: multiple waste types per request
+ */
+model deposit_request_items {
+  item_id       Int     @id @default(autoincrement())
+  request_id    Int
+  waste_type_id Int
+  weight_kg     Decimal @db.Decimal(12, 3)
+
+  request    deposit_requests @relation(fields: [request_id], references: [request_id])
+  waste_type waste_types      @relation(fields: [waste_type_id], references: [waste_type_id])
+
+  @@index([request_id])
+  @@index([waste_type_id])
+}
+
+/**
+ * wallets: saldo warga
+ */
 model wallets {
-  wallet_id   Int     @id @default(autoincrement())
-  user_id     Int     @unique
-  balance     Decimal @db.Decimal(14,2) @default(0)
+  wallet_id Int     @id @default(autoincrement())
+  user_id   Int     @unique
+  balance   Decimal @default(0) @db.Decimal(14, 2)
 
   // relations
-  user        users   @relation(fields: [user_id], references: [user_id])
+  user users @relation(fields: [user_id], references: [user_id])
 }
 
-/* wallet_history */
+/**
+ * wallet_history
+ */
 model wallet_history {
-  history_id  Int    @id @default(autoincrement())
-  user_id     Int
-  type        WalletHistoryType
-  amount      Decimal @db.Decimal(14,2)
-  reference_id Int?    // transaction_id or withdrawal reference
-  created_at  DateTime @default(now())
+  history_id   Int               @id @default(autoincrement())
+  user_id      Int
+  type         WalletHistoryType
+  amount       Decimal           @db.Decimal(14, 2)
+  reference_id Int? // transaction_id or withdrawal reference
+  created_at   DateTime          @default(now())
 
-  user        users   @relation(fields: [user_id], references: [user_id])
+  user users @relation(fields: [user_id], references: [user_id])
+
   @@index([user_id])
 }
 
-/* collection schedules for RW or Kelurahan (PPSU) */
+/**
+ * collection schedules for RW or Kelurahan (PPSU)
+ */
 model collection_schedules {
-  schedule_id   Int     @id @default(autoincrement())
-  rw_id         Int?    // if null -> kelurahan schedule
-  kelurahan_id  Int?    // if null -> rw schedule
-  date          DateTime
-  start_time    DateTime
-  end_time      DateTime
-  description   String?
+  schedule_id  Int      @id @default(autoincrement())
+  rw_id        Int? // if null -> kelurahan schedule
+  kelurahan_id Int? // if null -> rw schedule
+  date         DateTime
+  start_time   DateTime
+  end_time     DateTime
+  description  String?
 
-  rw_list       rw_list?      @relation(fields: [rw_id], references: [rw_id])
-  kelurahan     kelurahan?    @relation(fields: [kelurahan_id], references: [kelurahan_id])
+  rw_list   rw_list?   @relation(fields: [rw_id], references: [rw_id])
+  kelurahan kelurahan? @relation(fields: [kelurahan_id], references: [kelurahan_id])
+
   @@index([rw_id])
   @@index([kelurahan_id])
 }
 
-/* withdraw schedules */
+/**
+ * withdraw schedules
+ */
 model withdraw_schedules {
-  withdraw_schedule_id Int   @id @default(autoincrement())
-  rw_id               Int?
-  kelurahan_id        Int?
-  date                DateTime
-  start_time          DateTime
-  end_time            DateTime
+  withdraw_schedule_id Int      @id @default(autoincrement())
+  rw_id                Int?
+  kelurahan_id         Int?
+  date                 DateTime
+  start_time           DateTime
+  end_time             DateTime
 
-  rw_list             rw_list?   @relation(fields: [rw_id], references: [rw_id])
-  kelurahan           kelurahan? @relation(fields: [kelurahan_id], references: [kelurahan_id])
+  rw_list   rw_list?   @relation(fields: [rw_id], references: [rw_id])
+  kelurahan kelurahan? @relation(fields: [kelurahan_id], references: [kelurahan_id])
+
   @@index([rw_id])
   @@index([kelurahan_id])
 }
 
-/* notifications */
+/**
+ * notifications
+ */
 model notifications {
-  notification_id Int    @id @default(autoincrement())
+  notification_id Int      @id @default(autoincrement())
   user_id         Int?
   rw_id           Int?
   kelurahan_id    Int?
   title           String
   message         String
-  is_read         Boolean @default(false)
+  is_read         Boolean  @default(false)
   created_at      DateTime @default(now())
 
-  user            users?    @relation("user_notifications", fields: [user_id], references: [user_id])
-  rw_list         rw_list?  @relation("rw_notifications", fields: [rw_id], references: [rw_id])
-  kelurahan       kelurahan? @relation("kelurahan_notifications", fields: [kelurahan_id], references: [kelurahan_id])
+  user      users?     @relation("user_notifications", fields: [user_id], references: [user_id])
+  rw_list   rw_list?   @relation("rw_notifications", fields: [rw_id], references: [rw_id])
+  kelurahan kelurahan? @relation("kelurahan_notifications", fields: [kelurahan_id], references: [kelurahan_id])
 
   @@index([user_id])
   @@index([rw_id])
   @@index([kelurahan_id])
 }
 
-/* pengepul (buyers) */
+/**
+ * pengepul (buyers)
+ */
 model pengepul {
-  pengepul_id Int    @id @default(autoincrement())
-  name         String
-  phone        String?
-  address      String?
-  bulk_sales   bulk_sales[]
+  pengepul_id Int          @id @default(autoincrement())
+  name        String
+  phone       String?
+  address     String?
+  bulk_sales  bulk_sales[]
 }
 
-/* bulk_sales: penjualan RW/PPSU ke pengepul */
+/**
+ * bulk_sales: penjualan RW/PPSU ke pengepul
+ */
 model bulk_sales {
-  sale_id       Int     @id @default(autoincrement())
-  rw_id         Int?
-  kelurahan_id  Int?
+  sale_id      Int      @id @default(autoincrement())
+  rw_id        Int?
+  kelurahan_id Int?
   pengepul_id  Int
-  total_weight  Decimal @db.Decimal(14,3)
-  total_amount  Decimal @db.Decimal(14,2)
-  date          DateTime @default(now())
+  total_weight Decimal  @db.Decimal(14, 3)
+  total_amount Decimal  @db.Decimal(14, 2)
+  date         DateTime @default(now())
 
-  rw_list       rw_list? @relation("rw_sales", fields: [rw_id], references: [rw_id])
-  kelurahan_rel kelurahan? @relation("kelurahan_sales", fields: [kelurahan_id], references: [kelurahan_id])
-  pengepul     pengepul @relation(fields: [pengepul_id], references: [pengepul_id])
+  rw_list       rw_list?          @relation("rw_sales", fields: [rw_id], references: [rw_id])
+  kelurahan_rel kelurahan?        @relation("kelurahan_sales", fields: [kelurahan_id], references: [kelurahan_id])
+  pengepul      pengepul          @relation(fields: [pengepul_id], references: [pengepul_id])
   items         bulk_sale_items[]
+
   @@index([rw_id])
   @@index([kelurahan_id])
   @@index([pengepul_id])
 }
 
-/* bulk_sale_items: detail per jenis sampah */
+/**
+ * bulk_sale_items: detail per jenis sampah
+ */
 model bulk_sale_items {
   sale_item_id  Int     @id @default(autoincrement())
   sale_id       Int
   waste_type_id Int
-  weight_kg     Decimal @db.Decimal(14,3)
-  price_per_kg  Decimal @db.Decimal(12,2)
-  subtotal      Decimal @db.Decimal(14,2)
+  weight_kg     Decimal @db.Decimal(14, 3)
+  price_per_kg  Decimal @db.Decimal(12, 2)
+  subtotal      Decimal @db.Decimal(14, 2)
 
-  sale          bulk_sales @relation(fields: [sale_id], references: [sale_id])
-  waste_type    waste_types @relation(fields: [waste_type_id], references: [waste_type_id])
+  sale       bulk_sales  @relation(fields: [sale_id], references: [sale_id])
+  waste_type waste_types @relation(fields: [waste_type_id], references: [waste_type_id])
+
   @@index([sale_id])
   @@index([waste_type_id])
 }
 
-/* reports (RW and Kelurahan reports) */
+/**
+ * reports (RW and Kelurahan reports)
+ */
 model reports {
-  report_id         Int     @id @default(autoincrement())
-  rw_id             Int?
-  kelurahan_id      Int?
-  month             Int
-  year              Int
+  report_id          Int      @id @default(autoincrement())
+  rw_id              Int?
+  kelurahan_id       Int?
+  month              Int
+  year               Int
   total_transactions Int
-  total_weight      Decimal @db.Decimal(14,3)
-  total_revenue     Decimal @db.Decimal(14,2)
-  total_withdraw    Decimal @db.Decimal(14,2)
-  created_at        DateTime @default(now())
+  total_weight       Decimal  @db.Decimal(14, 3)
+  total_revenue      Decimal  @db.Decimal(14, 2)
+  total_withdraw     Decimal  @db.Decimal(14, 2)
+  created_at         DateTime @default(now())
 
-  rw_list           rw_list? @relation("rw_reports", fields: [rw_id], references: [rw_id])
-  kelurahan_rel2    kelurahan? @relation("kelurahan_reports", fields: [kelurahan_id], references: [kelurahan_id])
+  rw_list        rw_list?   @relation("rw_reports", fields: [rw_id], references: [rw_id])
+  kelurahan_rel2 kelurahan? @relation("kelurahan_reports", fields: [kelurahan_id], references: [kelurahan_id])
+
   @@index([rw_id])
   @@index([kelurahan_id])
 }

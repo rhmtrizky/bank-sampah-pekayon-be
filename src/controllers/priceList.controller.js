@@ -19,3 +19,12 @@ export const listPriceList = asyncHandler(async (req, res) => {
   const data = await PriceListService.list(req.query);
   return ok(res, data, "Price list");
 });
+
+export const listPriceListByRw = asyncHandler(async (req, res) => {
+  const rw_id = Number(req.params.rw_id);
+  if (Number.isNaN(rw_id)) {
+    return ok(res, [], "Invalid rw_id");
+  }
+  const data = await PriceListService.list({ rw_id });
+  return ok(res, data, "Price list by rw_id");
+});

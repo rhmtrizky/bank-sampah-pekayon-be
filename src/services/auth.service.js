@@ -6,7 +6,7 @@ import { AppError } from "../utils/errors.js";
 
 export const AuthService = {
   async registerWarga(payload) {
-    const { name, email, phone, password, rt, rw } = payload;
+    const { name, email, phone, alamat, password, rt, rw } = payload;
     if (!email && !phone) throw new AppError(400, "Email or phone is required");
 
     const passwordHash = await hashPassword(password);
@@ -14,6 +14,7 @@ export const AuthService = {
       name,
       email: email || null,
       phone: phone || null,
+      alamat: alamat || null,
       password: passwordHash,
       role: "warga",
       rt: rt ?? null,
@@ -28,15 +29,17 @@ export const AuthService = {
   },
 
   async registerRw(payload) {
-    const { name, email, phone, password, rw_id } = payload;
+    const { name, email, phone, alamat, password, rw_id } = payload;
     const passwordHash = await hashPassword(password);
     const user = await UsersRepo.create({
       name,
       email,
       phone: phone || null,
+      alamat: alamat || null,
       password: passwordHash,
       role: "rw",
       rw: rw_id,
+      kelurahan_id: 1,
     });
     await WalletsRepo.create({ user_id: user.user_id, balance: "0.00" });
     const token = signJwt({ sub: user.user_id, role: user.role });
@@ -61,6 +64,33 @@ export const AuthService = {
     const user = await UsersRepo.findById(user_id);
     if (!user) throw new AppError(404, "User not found");
     return sanitize(user);
+  },
+
+  async updateProfile(user_id, payload) {
+    const existing = await UsersRepo.findById(user_id);
+    if (!existing) throw new AppError(404, "User not found");
+
+    const { name, email, phone, alamat, rt, rw } = payload;
+
+    // Optional uniqueness checks when changing email/phone
+    if (email && email !== existing.email) {
+      const dup = await UsersRepo.findByEmail(email);
+      if (dup) throw new AppError(409, "Email already in use");
+    }
+    if (phone && phone !== existing.phone) {
+      const dup2 = await UsersRepo.findByPhone(phone);
+      if (dup2) throw new AppError(409, "Phone already in use");
+    }
+
+    const updated = await UsersRepo.updateById(user_id, {
+      name: name ?? existing.name,
+      email: email ?? existing.email,
+      phone: phone ?? existing.phone,
+      alamat: alamat ?? existing.alamat,
+      rt: rt ?? existing.rt,
+      rw: rw ?? existing.rw,
+    });
+    return sanitize(updated);
   },
 };
 

@@ -22,6 +22,7 @@ export const PriceListRepo = {
     if (kelurahan_id) where.kelurahan_id = kelurahan_id;
     return prisma.price_list.findMany({
       where,
+      include: { waste_type: true, rw_list: true, kelurahan: true },
       orderBy: { effective_date: "desc" },
     });
   },

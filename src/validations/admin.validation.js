@@ -18,6 +18,7 @@ export const createRwSchema = z.object({
   name: z.string().optional().nullable(),
   phone: z.string().min(6).max(20).optional().nullable(),
   address: z.string().max(255).optional().nullable(),
+  password: z.string().min(6),
 });
 
 export const updateRwSchema = z.object({

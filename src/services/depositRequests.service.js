@@ -11,16 +11,35 @@ function toDec(num, digits = 2) {
 }
 
 export const DepositRequestsService = {
-  async create(user, { waste_type_id, estimated_weight, photo }) {
+  async create(user, { items }, file) {
     if (user.role !== "warga")
       throw new AppError(403, "Only warga can create deposit requests");
     if (!user.rw) throw new AppError(400, "User has no RW assigned");
+
+    let photoUrl = null;
+    if (file) {
+      const { v2: cloud } = await import("cloudinary");
+      await new Promise((resolve) => resolve());
+      cloud.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+      const upload = await cloud.uploader.upload(file.path, {
+        folder: "bank-sampah/deposit-requests",
+        resource_type: "image",
+      });
+      photoUrl = upload.secure_url;
+    }
+
     const dr = await DepositRequestsRepo.create({
       user_id: user.user_id,
       rw_id: user.rw,
-      waste_type_id,
-      estimated_weight: toDec(estimated_weight, 3),
-      photo: photo || null,
+      photo: photoUrl,
+      items: items.map((i) => ({
+        waste_type_id: i.waste_type_id,
+        weight_kg: toDec(i.weight_kg, 3),
+      })),
     });
     return dr;
   },
@@ -29,6 +48,19 @@ export const DepositRequestsService = {
     if (user.role !== "warga")
       throw new AppError(403, "Only warga can list their deposit requests");
     return DepositRequestsRepo.listMine(user.user_id);
+  },
+
+  async detail(user, request_id) {
+    const id = Number(request_id);
+    if (Number.isNaN(id)) throw new AppError(400, "Invalid request id");
+    const dr = await DepositRequestsRepo.findDetailById(id);
+    if (!dr) throw new AppError(404, "Deposit request not found");
+    // Authorization: warga only own requests; rw only for own rw; kelurahan/super_admin allowed
+    if (user.role === "warga" && dr.user_id !== user.user_id)
+      throw new AppError(403, "Forbidden");
+    if (user.role === "rw" && dr.rw_id !== user.rw)
+      throw new AppError(403, "Forbidden");
+    return dr;
   },
 
   async schedule(rwUser, request_id, { scheduled_date }) {
@@ -59,9 +91,17 @@ export const DepositRequestsService = {
 
     const warga = await UsersRepo.findById(dr.user_id);
     if (!warga) throw new AppError(404, "Warga not found");
+    // For multiple items, this method should be revisited to compute per-item.
+    // Keeping previous logic for compatibility until completion flow is redesigned.
+    const firstItem = await prisma.deposit_request_items.findFirst({
+      where: { request_id: dr.request_id },
+      orderBy: { item_id: "asc" },
+    });
+    if (!firstItem) throw new AppError(400, "No items found for this request");
+
     const price = await PriceListRepo.findLatestByRwAndWaste(
       rwUser.rw,
-      dr.waste_type_id
+      firstItem.waste_type_id
     );
     if (!price) throw new AppError(400, "Price list entry not found");
 
@@ -71,7 +111,7 @@ export const DepositRequestsService = {
     const transaction = await TransactionsRepo.create({
       user_id: warga.user_id,
       rw_id: rwUser.rw,
-      waste_type_id: dr.waste_type_id,
+      waste_type_id: firstItem.waste_type_id,
       weight_kg: toDec(actual_weight_kg, 3),
       price_per_kg: toDec(pricePerKg, 2),
       total_amount: toDec(totalAmount, 2),

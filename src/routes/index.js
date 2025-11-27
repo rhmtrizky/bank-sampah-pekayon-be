@@ -10,6 +10,8 @@ import bulkSalesRoutes from "./bulkSales.routes.js";
 import reportsRoutes from "./reports.routes.js";
 import monitoringRoutes from "./monitoring.routes.js";
 import adminRoutes from "./admin.routes.js";
+import rwRoutes from "./rw.routes.js";
+import uploadRoutes from "./upload.routes.js";
 
 const router = express.Router();
 
@@ -29,5 +31,7 @@ router.use("/bulk-sales", bulkSalesRoutes);
 router.use("/reports", reportsRoutes);
 router.use("/monitoring", monitoringRoutes);
 router.use("/admin", adminRoutes);
+router.use("/rw", rwRoutes);
+router.use("/upload", uploadRoutes);
 
 export default router;
