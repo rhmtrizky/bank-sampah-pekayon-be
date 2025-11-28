@@ -13,7 +13,7 @@ export const AuthService = {
     const user = await UsersRepo.create({
       name,
       email: email || null,
-      phone: phone || null,
+      phone: phone,
       alamat: alamat || null,
       password: passwordHash,
       role: "warga",

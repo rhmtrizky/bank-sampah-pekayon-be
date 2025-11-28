@@ -6,12 +6,10 @@ import {
   completeDepositRequestSchema,
 } from "../validations/depositRequests.validation.js";
 import { DepositRequestsService } from "../services/depositRequests.service.js";
-import multer from "multer";
-const upload = multer({ dest: "uploads/" });
 
 export const createDepositRequest = asyncHandler(async (req, res) => {
   const parsed = depositRequestSchema.parse(req.body);
-  const data = await DepositRequestsService.create(req.user, parsed, req.file);
+  const data = await DepositRequestsService.create(req.user, parsed);
   return created(res, data, "Deposit request created");
 });
 
@@ -43,4 +41,13 @@ export const completeDepositRequest = asyncHandler(async (req, res) => {
     parsed
   );
   return ok(res, data, "Deposit request completed");
+});
+
+// new
+export const cancelDepositRequest = asyncHandler(async (req, res) => {
+  const data = await DepositRequestsService.cancel(
+    req.user,
+    Number(req.params.id)
+  );
+  return ok(res, data, "Deposit request canceled");
 });

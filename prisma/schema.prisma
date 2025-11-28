@@ -43,7 +43,7 @@ model users {
   user_id      Int      @id @default(autoincrement())
   name         String
   email        String?  @unique
-  phone        String?  @unique
+  phone        String  @unique
   alamat       String?
   password     String
   role         UserRole @default(warga)

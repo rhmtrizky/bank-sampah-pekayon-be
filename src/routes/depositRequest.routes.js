@@ -6,19 +6,12 @@ import {
   completeDepositRequest,
   createDepositRequest,
   getDepositRequestDetail,
+  cancelDepositRequest,
 } from "../controllers/depositRequests.controller.js";
-import multer from "multer";
 
 const router = express.Router();
 
-const upload = multer({ dest: "uploads/" });
-router.post(
-  "/",
-  authRequired,
-  requireRole(["warga"]),
-  upload.single("photo"),
-  createDepositRequest
-);
+router.post("/", authRequired, requireRole(["warga"]), createDepositRequest);
 router.get(
   "/mine",
   authRequired,
@@ -42,6 +35,12 @@ router.patch(
   authRequired,
   requireRole(["rw"]),
   completeDepositRequest
+);
+router.patch(
+  "/:id/cancel",
+  authRequired,
+  requireRole(["warga"]),
+  cancelDepositRequest
 );
 
 export default router;

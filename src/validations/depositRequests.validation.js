@@ -26,7 +26,7 @@ export const depositRequestSchema = z.object({
       )
       .min(1)
   ),
-  // photo handled by multer; no validation here
+  photo_url: z.string().url().optional().nullable(),
 });
 
 export const scheduleDepositRequestSchema = z.object({

@@ -11,31 +11,19 @@ function toDec(num, digits = 2) {
 }
 
 export const DepositRequestsService = {
-  async create(user, { items }, file) {
+  async create(user, { rw_id, items, photo, photo_url }) {
     if (user.role !== "warga")
       throw new AppError(403, "Only warga can create deposit requests");
     if (!user.rw) throw new AppError(400, "User has no RW assigned");
 
-    let photoUrl = null;
-    if (file) {
-      const { v2: cloud } = await import("cloudinary");
-      await new Promise((resolve) => resolve());
-      cloud.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-      });
-      const upload = await cloud.uploader.upload(file.path, {
-        folder: "bank-sampah/deposit-requests",
-        resource_type: "image",
-      });
-      photoUrl = upload.secure_url;
-    }
-
+    const photoUrl =
+      [photo, photo_url]
+        .find((v) => typeof v === "string" && v.trim() !== "")
+        ?.trim() ?? null;
     const dr = await DepositRequestsRepo.create({
       user_id: user.user_id,
       rw_id: user.rw,
-      photo: photoUrl,
+      photoUrl,
       items: items.map((i) => ({
         waste_type_id: i.waste_type_id,
         weight_kg: toDec(i.weight_kg, 3),
@@ -130,5 +118,25 @@ export const DepositRequestsService = {
 
     await DepositRequestsRepo.update(request_id, { status: "completed" });
     return { request: dr, transaction };
+  },
+
+  // warga cancels their own pending request
+  async cancel(user, request_id) {
+    if (user.role !== "warga")
+      throw new AppError(403, "Only warga can cancel deposit requests");
+
+    const id = Number(request_id);
+    if (Number.isNaN(id)) throw new AppError(400, "Invalid request id");
+
+    const dr = await DepositRequestsRepo.findById(id);
+    if (!dr) throw new AppError(404, "Deposit request not found");
+    if (dr.user_id !== user.user_id) throw new AppError(403, "Forbidden");
+    if (dr.status !== "pending")
+      throw new AppError(400, "Only pending requests can be canceled");
+
+    const updated = await DepositRequestsRepo.update(id, {
+      status: "cancelled",
+    });
+    return updated;
   },
 };

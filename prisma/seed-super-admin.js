@@ -8,6 +8,7 @@ async function main() {
   const email = process.env.SUPER_ADMIN_EMAIL || "admin@example.com";
   const password = process.env.SUPER_ADMIN_PASSWORD || "ChangeMe123!";
   const name = process.env.SUPER_ADMIN_NAME || "Super Admin";
+  const phone = process.env.SUPER_ADMIN_PHONE || "0000000000";
 
   const existing = await prisma.users.findFirst({
     where: { role: "super_admin" },
@@ -21,7 +22,7 @@ async function main() {
   }
   const hash = await bcrypt.hash(password, 10);
   const user = await prisma.users.create({
-    data: { name, email, password: hash, role: "super_admin" },
+    data: { name, email, phone, password: hash, role: "super_admin" },
   });
   console.log("Super admin created:", user.user_id, email);
   console.log("IMPORTANT: Change the password if using default.");
