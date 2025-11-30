@@ -12,6 +12,7 @@ import monitoringRoutes from "./monitoring.routes.js";
 import adminRoutes from "./admin.routes.js";
 import rwRoutes from "./rw.routes.js";
 import uploadRoutes from "./upload.routes.js";
+import dashboardRoutes from "./dashboard.routes.js";
 
 const router = express.Router();
 
@@ -33,5 +34,6 @@ router.use("/monitoring", monitoringRoutes);
 router.use("/admin", adminRoutes);
 router.use("/rw", rwRoutes);
 router.use("/upload", uploadRoutes);
+router.use("/dashboard", dashboardRoutes);
 
 export default router;

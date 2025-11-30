@@ -36,3 +36,9 @@ export const scheduleDepositRequestSchema = z.object({
 export const completeDepositRequestSchema = z.object({
   actual_weight_kg: z.number().positive(),
 });
+
+export const bulkScheduleDepositRequestsSchema = z.object({
+  from_date: z.string().datetime(),
+  to_date: z.string().datetime(),
+  scheduled_date: z.string().datetime(),
+});

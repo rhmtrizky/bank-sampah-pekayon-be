@@ -4,6 +4,7 @@ import {
   depositRequestSchema,
   scheduleDepositRequestSchema,
   completeDepositRequestSchema,
+  bulkScheduleDepositRequestsSchema,
 } from "../validations/depositRequests.validation.js";
 import { DepositRequestsService } from "../services/depositRequests.service.js";
 
@@ -31,6 +32,19 @@ export const scheduleDepositRequest = asyncHandler(async (req, res) => {
     parsed
   );
   return ok(res, data, "Deposit request scheduled");
+});
+
+export const bulkScheduleDepositRequests = asyncHandler(async (req, res) => {
+  const { from_date, to_date, scheduled_date } =
+    bulkScheduleDepositRequestsSchema.parse(req.body);
+  const rwId = req.user.rw;
+  const result = await DepositRequestsService.scheduleBulk(
+    rwId,
+    from_date,
+    to_date,
+    scheduled_date
+  );
+  return created(res, result);
 });
 
 export const completeDepositRequest = asyncHandler(async (req, res) => {

@@ -7,6 +7,7 @@ import {
   createDepositRequest,
   getDepositRequestDetail,
   cancelDepositRequest,
+  bulkScheduleDepositRequests,
 } from "../controllers/depositRequests.controller.js";
 
 const router = express.Router();
@@ -29,6 +30,12 @@ router.patch(
   authRequired,
   requireRole(["rw"]),
   scheduleDepositRequest
+);
+router.patch(
+  "/bulk-schedule",
+  authRequired,
+  requireRole(["rw"]),
+  bulkScheduleDepositRequests
 );
 router.patch(
   "/:id/complete",

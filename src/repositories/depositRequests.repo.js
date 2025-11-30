@@ -69,4 +69,19 @@ export const DepositRequestsRepo = {
     }),
   update: (request_id, data) =>
     prisma.deposit_requests.update({ where: { request_id }, data }),
+  bulkScheduleByDateRange: (rw_id, from_date, to_date, scheduled_date) =>
+    prisma.deposit_requests.updateMany({
+      where: {
+        rw_id,
+        status: "pending",
+        created_at: {
+          gte: new Date(from_date),
+          lte: new Date(to_date),
+        },
+      },
+      data: {
+        status: "scheduled",
+        scheduled_date: new Date(scheduled_date),
+      },
+    }),
 };

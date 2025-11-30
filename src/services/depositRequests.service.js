@@ -1,4 +1,5 @@
 import { AppError } from "../utils/errors.js";
+import prisma from "../config/database.js";
 import { DepositRequestsRepo } from "../repositories/depositRequests.repo.js";
 import { PriceListRepo } from "../repositories/priceList.repo.js";
 import { TransactionsRepo } from "../repositories/transactions.repo.js";
@@ -11,19 +12,15 @@ function toDec(num, digits = 2) {
 }
 
 export const DepositRequestsService = {
-  async create(user, { rw_id, items, photo, photo_url }) {
+  async create(user, { rw_id, items, photo_url }) {
     if (user.role !== "warga")
       throw new AppError(403, "Only warga can create deposit requests");
     if (!user.rw) throw new AppError(400, "User has no RW assigned");
 
-    const photoUrl =
-      [photo, photo_url]
-        .find((v) => typeof v === "string" && v.trim() !== "")
-        ?.trim() ?? null;
     const dr = await DepositRequestsRepo.create({
       user_id: user.user_id,
       rw_id: user.rw,
-      photoUrl,
+      photo: photo_url || null,
       items: items.map((i) => ({
         waste_type_id: i.waste_type_id,
         weight_kg: toDec(i.weight_kg, 3),
@@ -138,5 +135,20 @@ export const DepositRequestsService = {
       status: "cancelled",
     });
     return updated;
+  },
+
+  async scheduleBulk(rwId, from_date, to_date, scheduled_date) {
+    if (!rwId) throw new AppError(400, "RW is required");
+    const result = await DepositRequestsRepo.bulkScheduleByDateRange(
+      rwId,
+      from_date,
+      to_date,
+      scheduled_date
+    );
+    return {
+      updatedCount: result.count ?? 0,
+      scheduled_date,
+      range: { from_date, to_date },
+    };
   },
 };
