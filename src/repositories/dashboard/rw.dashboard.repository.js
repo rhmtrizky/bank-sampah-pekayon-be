@@ -119,16 +119,54 @@ export const RwDashboardRepository = {
     return this.recentRequestsPaginated(rwId, 1, limit);
   },
 
-  async recentRequestsPaginated(rwId, page, limit) {
+  async recentRequestsPaginated(rwId, page, limit, filters = {}) {
     const skip = (page - 1) * limit;
+    // Build where clause with filters
+    const where = { rw_id: rwId };
+    if (filters.status) {
+      where.status = filters.status;
+    }
+    if (filters.date) {
+      // filters.date can be a string (YYYY-MM-DD)
+      const start = new Date(filters.date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(filters.date);
+      end.setHours(23, 59, 59, 999);
+      where.created_at = { gte: start, lte: end };
+    }
+    // For user name/phone, need to filter via relation
+    const userWhere = {};
+    if (filters.name) {
+      userWhere.name = { contains: filters.name, mode: "insensitive" };
+    }
+    if (filters.phone) {
+      userWhere.phone = { contains: filters.phone, mode: "insensitive" };
+    }
+    // Count with user filter
     const [total, rows] = await Promise.all([
-      prisma.deposit_requests.count({ where: { rw_id: rwId } }),
+      prisma.deposit_requests.count({
+        where: {
+          ...where,
+          ...(Object.keys(userWhere).length > 0
+            ? { user: { ...userWhere } }
+            : {}),
+        },
+      }),
       prisma.deposit_requests.findMany({
-        where: { rw_id: rwId },
+        where: {
+          ...where,
+          ...(Object.keys(userWhere).length > 0
+            ? { user: { ...userWhere } }
+            : {}),
+        },
         orderBy: { created_at: "desc" },
         skip,
         take: limit,
-        include: { user: { select: { user_id: true, name: true, rt: true } } },
+        include: {
+          user: {
+            select: { user_id: true, name: true, rt: true, phone: true },
+          },
+        },
       }),
     ]);
     return {

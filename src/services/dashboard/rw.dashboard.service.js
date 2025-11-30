@@ -34,8 +34,13 @@ export const RwDashboardService = {
     return RwDashboardRepository.recentTransactions(rwId, limit);
   },
 
-  async recentRequests(rwId, page, limit) {
-    return RwDashboardRepository.recentRequestsPaginated(rwId, page, limit);
+  async recentRequests(rwId, page, limit, filters = {}) {
+    return RwDashboardRepository.recentRequestsPaginated(
+      rwId,
+      page,
+      limit,
+      filters
+    );
   },
 
   async rtStatistics(rwId) {

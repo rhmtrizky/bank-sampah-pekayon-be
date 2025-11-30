@@ -34,9 +34,20 @@ export const getRwRecentTransactions = asyncHandler(async (req, res) => {
 
 export const getRwRecentRequests = asyncHandler(async (req, res) => {
   const rwId = req.user.rw;
-  const page = parseInt(req.query.page || "1", 10);
-  const limit = parseInt(req.query.limit || "10", 10);
-  const result = await RwDashboardService.recentRequests(rwId, page, limit);
+  const page = Number.parseInt(req.query.page || "1", 10);
+  const limit = Number.parseInt(req.query.limit || "10", 10);
+  // Parse filters from query params
+  const filters = {};
+  if (req.query.name) filters.name = req.query.name;
+  if (req.query.phone) filters.phone = req.query.phone;
+  if (req.query.date) filters.date = req.query.date; // Expect YYYY-MM-DD
+  if (req.query.status) filters.status = req.query.status;
+  const result = await RwDashboardService.recentRequests(
+    rwId,
+    page,
+    limit,
+    filters
+  );
   return ok(res, result, "RW recent requests");
 });
 

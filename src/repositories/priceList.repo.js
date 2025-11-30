@@ -26,4 +26,33 @@ export const PriceListRepo = {
       orderBy: { effective_date: "desc" },
     });
   },
+  listPaginated({ rw_id, kelurahan_id, skip = 0, take = 10 } = {}) {
+    const where = {};
+    if (rw_id) where.rw_id = rw_id;
+    if (kelurahan_id) where.kelurahan_id = kelurahan_id;
+    return prisma.price_list.findMany({
+      where,
+      include: { waste_type: true, rw_list: true, kelurahan: true },
+      orderBy: { effective_date: "desc" },
+      skip,
+      take,
+    });
+  },
+  count({ rw_id, kelurahan_id } = {}) {
+    const where = {};
+    if (rw_id) where.rw_id = rw_id;
+    if (kelurahan_id) where.kelurahan_id = kelurahan_id;
+    return prisma.price_list.count({ where });
+  },
+  update(price_id, data) {
+    return prisma.price_list.update({
+      where: { price_id },
+      data,
+    });
+  },
+  delete(price_id) {
+    return prisma.price_list.delete({
+      where: { price_id },
+    });
+  },
 };

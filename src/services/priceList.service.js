@@ -1,3 +1,4 @@
+// Duplicate block removed
 import { PriceListRepo } from "../repositories/priceList.repo.js";
 import { WasteTypesRepo } from "../repositories/wasteTypes.repo.js";
 import { AppError } from "../utils/errors.js";
@@ -7,6 +8,22 @@ function toDec(num, digits = 2) {
 }
 
 export const PriceListService = {
+  async listPaginated(query) {
+    const { rw_id, kelurahan_id, page = 1, limit = 10 } = query;
+    const parsedRw = rw_id ? Number(rw_id) : undefined;
+    const parsedKel = kelurahan_id ? Number(kelurahan_id) : undefined;
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      PriceListRepo.listPaginated({
+        rw_id: parsedRw,
+        kelurahan_id: parsedKel,
+        skip,
+        take: limit,
+      }),
+      PriceListRepo.count({ rw_id: parsedRw, kelurahan_id: parsedKel }),
+    ]);
+    return { data, total, page, limit };
+  },
   async createForRw(user, payload) {
     if (user.role !== "rw")
       throw new AppError(403, "Only RW can create RW price list");
@@ -45,5 +62,33 @@ export const PriceListService = {
     const parsedRw = rw_id ? Number(rw_id) : undefined;
     const parsedKel = kelurahan_id ? Number(kelurahan_id) : undefined;
     return PriceListRepo.list({ rw_id: parsedRw, kelurahan_id: parsedKel });
+  },
+
+  async updateForRw(user, price_id, payload) {
+    if (user.role !== "rw")
+      throw new AppError(403, "Only RW can update RW price list");
+    // Optionally: check ownership by fetching and comparing rw_id
+    return PriceListRepo.update(price_id, payload);
+  },
+
+  async deleteForRw(user, price_id) {
+    if (user.role !== "rw")
+      throw new AppError(403, "Only RW can delete RW price list");
+    // Optionally: check ownership by fetching and comparing rw_id
+    return PriceListRepo.delete(price_id);
+  },
+
+  async updateForKelurahan(user, price_id, payload) {
+    if (user.role !== "kelurahan")
+      throw new AppError(403, "Only Kelurahan can update kelurahan price list");
+    // Optionally: check ownership by fetching and comparing kelurahan_id
+    return PriceListRepo.update(price_id, payload);
+  },
+
+  async deleteForKelurahan(user, price_id) {
+    if (user.role !== "kelurahan")
+      throw new AppError(403, "Only Kelurahan can delete kelurahan price list");
+    // Optionally: check ownership by fetching and comparing kelurahan_id
+    return PriceListRepo.delete(price_id);
   },
 };

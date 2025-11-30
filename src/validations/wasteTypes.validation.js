@@ -1,3 +1,8 @@
+export const updatePriceListSchema = z.object({
+  buy_price: z.number().nonnegative().optional(),
+  sell_price: z.number().nonnegative().optional(),
+  effective_date: z.string().datetime().optional(),
+});
 import { z } from "zod";
 
 export const createWasteTypeSchema = z.object({
