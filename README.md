@@ -54,9 +54,31 @@ Routes: `src/routes/wallet.routes.js`, Controller: `src/controllers/wallet.contr
 Routes: `src/routes/transactions.routes.js`, Controller: `src/controllers/transactions.controller.js`
 
 - POST `/transactions/offline`
+
   - Role: `rw`
   - Body: offline transaction payload (see controller for schema)
   - Response: created transaction
+
+- GET `/transactions/`
+
+  - Role: `rw`
+  - Query: `month?`, `year?`, `page?`, `limit?`
+  - Response: `{ data: [transaction], pagination: { page, limit, total, totalPages } }`
+
+- GET `/transactions/:id`
+
+  - Role: `rw`
+  - Response: transaction detail
+
+- PATCH `/transactions/:id`
+
+  - Role: `rw`
+  - Body: `{ weight_kg: number }` (recomputes `total_amount` using latest RW price)
+  - Response: updated transaction
+
+- DELETE `/transactions/:id`
+  - Role: `rw`
+  - Response: `{ success: true }`
 
 ## Deposit Request (`/deposit-request`)
 
@@ -412,6 +434,11 @@ This section lists canonical request bodies for POST/PATCH/PUT and response bodi
 
 - `POST /transactions/offline` request: `{ user_id: number, waste_type_id: number, weight_kg: number, price_per_kg: number, total_amount: number, rt?: number }`
 - `POST /transactions/offline` response: `{ transaction_id, user_id, rw_id, waste_type_id, weight_kg, price_per_kg, total_amount, transaction_method: 'offline', rt?, created_at }`
+- `GET /transactions/` response: `{ data: [{ transaction_id, user_id, rw_id, waste_type_id, weight_kg, price_per_kg, total_amount, transaction_method, rt?, created_at }], pagination: { page, limit, total, totalPages } }`
+- `GET /transactions/:id` response: `{ transaction_id, user_id, rw_id, waste_type_id, weight_kg, price_per_kg, total_amount, transaction_method, rt?, created_at }`
+- `PATCH /transactions/:id` request: `{ weight_kg: number }`
+- `PATCH /transactions/:id` response: updated transaction (same shape)
+- `DELETE /transactions/:id` response: `{ success: true }`
 
 ### Deposit Request
 
