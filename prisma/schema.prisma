@@ -249,6 +249,7 @@ model collection_schedules {
   schedule_id  Int      @id @default(autoincrement())
   rw_id        Int? // if null -> kelurahan schedule
   kelurahan_id Int? // if null -> rw schedule
+  title        String
   date         DateTime
   start_time   DateTime
   end_time     DateTime
@@ -268,9 +269,11 @@ model withdraw_schedules {
   withdraw_schedule_id Int      @id @default(autoincrement())
   rw_id                Int?
   kelurahan_id         Int?
+  title                String
   date                 DateTime
   start_time           DateTime
   end_time             DateTime
+  description          String?
 
   rw_list   rw_list?   @relation(fields: [rw_id], references: [rw_id])
   kelurahan kelurahan? @relation(fields: [kelurahan_id], references: [kelurahan_id])

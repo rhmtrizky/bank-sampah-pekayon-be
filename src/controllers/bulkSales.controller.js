@@ -12,9 +12,28 @@ export const createPengepul = asyncHandler(async (req, res) => {
   return created(res, data, "Pengepul created");
 });
 
-export const listPengepul = asyncHandler(async (_req, res) => {
-  const data = await BulkSalesService.listPengepul();
+export const listPengepul = asyncHandler(async (req, res) => {
+  const data = await BulkSalesService.listPengepul(req.query);
   return ok(res, data, "Pengepul list");
+});
+
+export const updatePengepul = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error("Invalid pengepul id");
+  }
+  const parsed = createPengepulSchema.parse(req.body);
+  const data = await BulkSalesService.updatePengepul(req.user, id, parsed);
+  return ok(res, data, "Pengepul updated");
+});
+
+export const deletePengepul = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error("Invalid pengepul id");
+  }
+  const result = await BulkSalesService.deletePengepul(req.user, id);
+  return ok(res, result, "Pengepul deleted");
 });
 
 export const createBulkSale = asyncHandler(async (req, res) => {

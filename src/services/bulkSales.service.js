@@ -18,8 +18,35 @@ export const BulkSalesService = {
       address: payload.address || null,
     });
   },
-  async listPengepul() {
-    return PengepulRepo.list();
+  async listPengepul(query = {}) {
+    const page = query.page ? Number.parseInt(query.page, 10) : 1;
+    const limit = query.limit ? Number.parseInt(query.limit, 10) : 10;
+    const filters = {
+      name: query.name || undefined,
+      phone: query.phone || undefined,
+    };
+    return PengepulRepo.listPaginated(page, limit, filters);
+  },
+
+  async updatePengepul(user, id, payload) {
+    if (!["rw", "kelurahan"].includes(user.role))
+      throw new AppError(403, "Forbidden");
+    const existing = await PengepulRepo.findById(id);
+    if (!existing) throw new AppError(404, "Pengepul not found");
+    return PengepulRepo.update(id, {
+      name: payload.name,
+      phone: payload.phone || null,
+      address: payload.address || null,
+    });
+  },
+
+  async deletePengepul(user, id) {
+    if (!["rw", "kelurahan"].includes(user.role))
+      throw new AppError(403, "Forbidden");
+    const existing = await PengepulRepo.findById(id);
+    if (!existing) throw new AppError(404, "Pengepul not found");
+    await PengepulRepo.delete(id);
+    return { deleted: true };
   },
 
   async createBulkSale(user, payload) {

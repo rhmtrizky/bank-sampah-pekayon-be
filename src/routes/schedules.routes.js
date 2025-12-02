@@ -5,6 +5,10 @@ import {
   createWithdrawSchedule,
   listCollectionSchedules,
   listWithdrawSchedules,
+  updateCollectionSchedule,
+  deleteCollectionSchedule,
+  updateWithdrawSchedule,
+  deleteWithdrawSchedule,
 } from "../controllers/schedules.controller.js";
 
 const router = express.Router();
@@ -17,11 +21,35 @@ router.post(
   requireRole(["rw", "kelurahan"]),
   createCollectionSchedule
 );
+router.put(
+  "/collection/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  updateCollectionSchedule
+);
+router.delete(
+  "/collection/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  deleteCollectionSchedule
+);
 router.post(
   "/withdraw",
   authRequired,
   requireRole(["rw", "kelurahan"]),
   createWithdrawSchedule
+);
+router.put(
+  "/withdraw/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  updateWithdrawSchedule
+);
+router.delete(
+  "/withdraw/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  deleteWithdrawSchedule
 );
 
 export default router;

@@ -3,6 +3,8 @@ import { authRequired, requireRole } from "../middlewares/auth.js";
 import {
   createPengepul,
   listPengepul,
+  updatePengepul,
+  deletePengepul,
   createBulkSale,
   listBulkSales,
 } from "../controllers/bulkSales.controller.js";
@@ -17,6 +19,18 @@ router.post(
   createPengepul
 );
 router.get("/pengepul", authRequired, listPengepul);
+router.put(
+  "/pengepul/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  updatePengepul
+);
+router.delete(
+  "/pengepul/:id",
+  authRequired,
+  requireRole(["rw", "kelurahan"]),
+  deletePengepul
+);
 
 // Bulk sales
 router.post(
